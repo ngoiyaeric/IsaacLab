@@ -17,8 +17,5 @@ def battery_penalty(env: ManagerBasedRLEnv) -> torch.Tensor:
 
 def empty_battery_penalty(env: ManagerBasedRLEnv) -> torch.Tensor:
     """Heavily penalize when battery hits exactly 0."""
-    return torch.where(
-        env.battery_buf <= 0.01,
-        torch.tensor(-10.0, device=env.device),
-        torch.tensor(0.0, device=env.device),
-    )
+    mask = env.battery_buf <= 0.01
+    return mask.to(env.battery_buf.dtype) * -10.0

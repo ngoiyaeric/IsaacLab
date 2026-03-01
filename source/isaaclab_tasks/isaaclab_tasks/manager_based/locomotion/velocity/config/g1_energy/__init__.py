@@ -3,9 +3,10 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+import gymnasium as gym
+
 from .env import G1EnergyEnv
 from .env_cfg import G1EnergyEnvCfg
-import gymnasium as gym
 
 gym.register(
     id="Isaac-Velocity-Energy-G1-v0",

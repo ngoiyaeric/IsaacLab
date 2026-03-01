@@ -9,11 +9,10 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.utils import configclass
 
+import isaaclab_tasks.manager_based.locomotion.velocity.config.g1_energy.mdp as custom_mdp
 from isaaclab_tasks.manager_based.locomotion.velocity.config.g1.flat_env_cfg import (
     G1FlatEnvCfg,
 )
-
-import source.isaaclab_tasks.isaaclab_tasks.manager_based.locomotion.velocity.config.g1_energy.mdp as custom_mdp
 
 
 @configclass
@@ -40,7 +39,7 @@ class G1EnergyEnvCfg(G1FlatEnvCfg):
         self.episode_length_s = 60.0
 
         # Terminations
-        self.terminations.battery_empty = DoneTerm(func=custom_mdp.battery_empty, time_out=True)
+        self.terminations.battery_empty = DoneTerm(func=custom_mdp.battery_empty, time_out=False)
 
         # Rewards
         self.rewards.battery_penalty = RewTerm(
@@ -51,7 +50,9 @@ class G1EnergyEnvCfg(G1FlatEnvCfg):
         # Observations
         # Add the custom observation terms to the policy observation space
         self.observations.policy.battery_level = ObsTerm(func=custom_mdp.battery_level)
-        self.observations.policy.token_count = ObsTerm(func=custom_mdp.token_count)
+        self.observations.policy.token_count = ObsTerm(
+            func=custom_mdp.token_count, params={"max_expected_tokens": self.charge_token_cost}
+        )
 
         # Ensure event mode is tracked
         self.events.at_charging_station = EventTerm(func=lambda env, env_ids: None, mode="at_charging_station")

@@ -19,7 +19,6 @@ class G1EnergyEnv(ManagerBasedRLEnv):
         # These will be initialized to 1.0 (full battery) and 0.0 (no tokens)
         self.battery_buf = None
         self.tokens_buf = None
-        self._cfg = cfg
 
         # Super init will call load_managers, so we will initialize the buffers inside load_managers
         super().__init__(cfg, **kwargs)
@@ -112,7 +111,7 @@ class G1EnergyEnv(ManagerBasedRLEnv):
             self.recorder_manager.record_post_step()
 
         # Reset environments
-        reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
+        reset_env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(reset_env_ids) > 0:
             self.recorder_manager.record_pre_reset(reset_env_ids)
             self._reset_idx(reset_env_ids)
@@ -139,15 +138,15 @@ class G1EnergyEnv(ManagerBasedRLEnv):
         )
 
     def _reset_idx(self, env_ids: torch.Tensor):
+        # Sample custom metrics logging before buffer reset
+        avg_battery = torch.mean(self.battery_buf[env_ids]).item()
+        avg_tokens = torch.mean(self.tokens_buf[env_ids]).item()
+
         super()._reset_idx(env_ids)
+
+        self.extras["log"]["Metrics/avg_battery"] = avg_battery
+        self.extras["log"]["Metrics/avg_tokens"] = avg_tokens
 
         # Reset custom buffers
         self.battery_buf[env_ids] = self.max_battery
         self.tokens_buf[env_ids] = 0.0
-
-        # Add custom metrics logging
-        avg_battery = torch.mean(self.battery_buf).item()
-        avg_tokens = torch.mean(self.tokens_buf).item()
-
-        self.extras["log"]["Metrics/avg_battery"] = avg_battery
-        self.extras["log"]["Metrics/avg_tokens"] = avg_tokens

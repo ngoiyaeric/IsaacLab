@@ -5,6 +5,5 @@
 
 """Configurations for velocity-based locomotion environments."""
 
-# We leave this file empty since we don't want to expose any configs in this package directly.
-# We still need this file to import the "config" module in the parent package.
+# Re-export g1_energy configs for parent-package imports
 from .g1_energy import *

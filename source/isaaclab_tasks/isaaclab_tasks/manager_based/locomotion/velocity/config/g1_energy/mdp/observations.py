@@ -14,7 +14,7 @@ def battery_level(env: ManagerBasedRLEnv) -> torch.Tensor:
     return (env.battery_buf / env.max_battery).unsqueeze(-1)
 
 
-def token_count(env: ManagerBasedRLEnv) -> torch.Tensor:
-    """Returns the current token count of the robot."""
+def token_count(env: ManagerBasedRLEnv, max_expected_tokens: float = 1.0) -> torch.Tensor:
+    """Returns the current normalized token count of the robot."""
     # (num_envs, 1)
-    return env.tokens_buf.unsqueeze(-1)
+    return (env.tokens_buf / max_expected_tokens).unsqueeze(-1)
