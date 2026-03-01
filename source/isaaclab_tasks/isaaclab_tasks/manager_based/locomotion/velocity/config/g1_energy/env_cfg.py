@@ -15,6 +15,10 @@ from isaaclab_tasks.manager_based.locomotion.velocity.config.g1.flat_env_cfg imp
 )
 
 
+def _noop_event(env, env_ids):
+    pass
+
+
 @configclass
 class G1EnergyEnvCfg(G1FlatEnvCfg):
     """Configuration for the G1 Energy Environment."""
@@ -25,6 +29,7 @@ class G1EnergyEnvCfg(G1FlatEnvCfg):
     token_earn_rate: float = 0.1  # Tokens earned per second of good tracking
     charge_token_cost: float = 1.0  # Cost in tokens to fully charge
     charging_station_radius: float = 1.0  # Radius to trigger charging at origin
+    vel_error_scale: float = 0.5  # Scale applied to tracking error for earning tokens
 
     def __post_init__(self):
         super().__post_init__()
@@ -55,4 +60,4 @@ class G1EnergyEnvCfg(G1FlatEnvCfg):
         )
 
         # Ensure event mode is tracked
-        self.events.at_charging_station = EventTerm(func=lambda env, env_ids: None, mode="at_charging_station")
+        self.events.at_charging_station = EventTerm(func=_noop_event, mode="at_charging_station")

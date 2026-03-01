@@ -24,7 +24,6 @@ class G1EnergyEnv(ManagerBasedRLEnv):
         super().__init__(cfg, **kwargs)
 
     def load_managers(self):
-        super().load_managers()
         # Initialize the buffers now that the number of environments is known
         self.battery_buf = torch.ones(self.num_envs, device=self.device)
         self.tokens_buf = torch.zeros(self.num_envs, device=self.device)
@@ -35,6 +34,10 @@ class G1EnergyEnv(ManagerBasedRLEnv):
         self.token_earn_rate = self.cfg.token_earn_rate
         self.charge_token_cost = self.cfg.charge_token_cost
         self.charging_station_radius = self.cfg.charging_station_radius
+
+        # Call super now that max_battery, battery_buf, and tokens_buf are initialized
+        # so that when ObservationManager runs during initialization, it has access to them
+        super().load_managers()
 
     def step(self, action: torch.Tensor):
         # Process actions
@@ -76,13 +79,14 @@ class G1EnergyEnv(ManagerBasedRLEnv):
         vel_error = torch.sum(torch.square(vel_cmd[:, :2] - current_vel[:, :2]), dim=1)
 
         # Earn tokens if error is low (robot is doing its job well)
-        job_quality = torch.exp(-vel_error / 0.5)
+        job_quality = torch.exp(-vel_error / self.cfg.vel_error_scale)
         tokens_earned = job_quality * self.token_earn_rate * self.step_dt
         self.tokens_buf += tokens_earned
 
         # Charging logic
-        # Check distance to charging station (origin 0,0)
-        dist_to_station = torch.norm(robot.data.root_pos_w[:, :2], dim=1)
+        # Check distance to charging station (origin 0,0 locally)
+        pos_local_xy = robot.data.root_pos_w[:, :2] - self.scene.env_origins[:, :2]
+        dist_to_station = torch.norm(pos_local_xy, dim=1)
         at_station = dist_to_station < self.charging_station_radius
         can_charge = self.tokens_buf >= self.charge_token_cost
 
